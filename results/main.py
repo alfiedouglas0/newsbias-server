@@ -1,8 +1,6 @@
+from htmlhelper import get_header_div, get_description_div, get_instructions_div
+
 from os.path import dirname, join
-
-import numpy as np
-from sklearn import manifold
-
 import json
 from datetime import datetime
 import io
@@ -12,6 +10,9 @@ import functools
 import operator
 # from threading import Thread
 
+import numpy as np
+from sklearn import manifold
+
 from bokeh.io import curdoc
 from bokeh.layouts import column, layout
 from bokeh.models import ColumnDataSource, Div, Select, Slider, TextInput, Toggle
@@ -19,14 +20,18 @@ from bokeh.plotting import figure
 
 MDS = manifold.MDS(n_components=2, random_state=1)
 TARGET_LOGO_HEIGHT = 0.1
+TOOLTIPS = [
+    ("Publisher", "@publisher"),
+]
+TOOLS = ["pan", "wheel_zoom", "box_zoom", "save", "reset"]
 DATA_PATH = join(dirname(__file__), "data/all_results.json")
 DATA = {}
 with open(DATA_PATH, "r") as f:
     DATA = json.load(f)
 
-div_header = Div(text=open(join(dirname(__file__), "templates/main.html")
-                           ).read(), sizing_mode="stretch_width", height_policy="fixed",
-                 height=75, align=("center", "start"))
+div_header = get_header_div()
+div_description = get_description_div()
+div_instructions = get_instructions_div()
 
 # Create Input controls
 wieght_sow = Slider(title="Influence of style of wrtiting",
@@ -48,13 +53,10 @@ show_logo = Toggle(label="Hide publisher logo",
 source = ColumnDataSource(
     data=dict(x=[], y=[], color=[], publisher=[], url=[], imageW=[], imageH=[]))
 
-TOOLTIPS = [
-    ("Publisher", "@publisher"),
-]
-
-p = figure(width_policy="fit", height_policy="fit",
-           title="", toolbar_location=None, tooltips=TOOLTIPS,
-           sizing_mode="stretch_both", margin=10)
+p = figure(width_policy="fit", height_policy="fit", tools=TOOLS,
+           title="", toolbar_location="right", tooltips=TOOLTIPS,
+           sizing_mode="stretch_both", margin=10,
+           min_width=600, min_height=450)
 glyph_cirles = p.circle(x="x", y="y", source=source, size=7,
                         #  color="color",
                         line_color=None, visible=False)
@@ -140,10 +142,12 @@ for control in controls:
     elif hasattr(control, "on_click"):
         control.on_change('active', lambda attr, old, new: update_markers())
 
-inputs = column(*controls, width=320, margin=20)
+inputs = column(div_instructions, *controls,
+                width=320, margin=20, max_width=320)
 inputs.sizing_mode = "stretch_height"
 l = layout([
     div_header,
+    div_description,
     [inputs, p],
 ], sizing_mode="stretch_both", height_policy="fit")
 

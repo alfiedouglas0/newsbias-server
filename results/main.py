@@ -8,6 +8,8 @@ from datetime import datetime
 import io
 from PIL import Image
 import requests
+import functools
+import operator
 # from threading import Thread
 
 from bokeh.io import curdoc
@@ -15,6 +17,7 @@ from bokeh.layouts import column, layout
 from bokeh.models import ColumnDataSource, Div, Select, Slider, TextInput, Toggle
 from bokeh.plotting import figure
 
+MDS = manifold.MDS(n_components=2, random_state=1)
 TARGET_LOGO_HEIGHT = 0.1
 DATA_PATH = join(dirname(__file__), "data/all_results.json")
 DATA = {}
@@ -26,12 +29,14 @@ div_header = Div(text=open(join(dirname(__file__), "templates/main.html")
                  height=75, align=("center", "start"))
 
 # Create Input controls
-wieght_sow = Slider(title="Weight of style of wrtiting",
+wieght_sow = Slider(title="Influence of style of wrtiting",
                     value=1, start=0, end=1, step=0.025)
-wieght_sent = Slider(title="Weight of sentiment",
+wieght_sent = Slider(title="Influence of emotive language",
                      value=1, start=0, end=1, step=0.025)
-wieght_ie = Slider(title="Weight of information extraction",
+wieght_ie = Slider(title="Influence of facts presented",
                    value=1, start=0, end=1, step=0.025)
+wieght_ambig = Slider(title="Influence of the ambiguity of the articles",
+                      value=1, start=0, end=1, step=0.025)
 # min_year = Slider(title="Articles from", start=2015,
 #                   end=2020, value=2015, step=1)
 # max_year = Slider(title="Articles till", start=2015,
@@ -72,6 +77,38 @@ def get_images():
             continue
 
 
+def get_mds_data():
+    data = []
+    if "SENTIMENT" in DATA:
+        data.append(
+            [[d[0] * wieght_sent.value, d[1] * wieght_sent.value]
+             for d in DATA["SENTIMENT"]]
+        )
+    if "UNMASKING" in DATA:
+        data.append(
+            [[d[0] * wieght_sow.value, d[1] * wieght_sow.value]
+             for d in DATA["UNMASKING"]]
+        )
+    if "FACTS" in DATA:
+        data.append(
+            [[d[0] * wieght_ie.value, d[1] * wieght_ie.value]
+             for d in DATA["FACTS"]]
+        )
+    if "AMBIGUITY" in DATA:
+        data.append(
+            [[d[0] * wieght_ambig.value, d[1] * wieght_ambig.value]
+             for d in DATA["AMBIGUITY"]]
+        )
+
+    if len(data) <= 0:
+        return []
+
+    return MDS.fit_transform(
+        [functools.reduce(operator.add, [*d])
+         for d in zip(*data)]  # concat the arrays
+    )
+
+
 def update_markers():
     if (show_logo.active):
         glyph_cirles.visible = True
@@ -82,28 +119,20 @@ def update_markers():
 
 
 def update_positions():
-    sentimentData = [[data[0] * wieght_sent.value, data[1] * wieght_sent.value]
-                     for data in DATA["SENTIMENT"]]
-    sowData = [[data[0] * wieght_sow.value, data[1] * wieght_sow.value]
-               for data in DATA["SOW"]]
-
-    data = manifold.MDS(n_components=2, random_state=1).fit_transform(
-        [d1 + d2 for d1, d2 in zip(sentimentData, sowData)]
-    )
+    dataMDS = get_mds_data()
+    if len(dataMDS) <= 0:
+        return
 
     source.data = dict(
-        x=[d[0] for d in data],
-        y=[d[1] for d in data],
-        # color=df["color"],
+        x=[d[0] for d in dataMDS],
+        y=[d[1] for d in dataMDS],
         publisher=DATA["publisherNames"],
         url=DATA["urls"],
         imageW=DATA["imageW"],
     )
 
-    p.title.text = str(datetime.now())
 
-
-controls = [wieght_sow, wieght_sent, wieght_ie, show_logo]
+controls = [wieght_sow, wieght_sent, wieght_ie, wieght_ambig, show_logo]
 
 for control in controls:
     if hasattr(control, "value"):

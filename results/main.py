@@ -1,4 +1,4 @@
-from htmlhelper import get_header_div, get_description_div, get_instructions_div
+from htmlhelper import get_header_div, get_description_div, get_instructions_div, get_loading_div
 
 from os.path import dirname, join
 import json
@@ -17,6 +17,9 @@ from bokeh.io import curdoc
 from bokeh.layouts import column, layout
 from bokeh.models import ColumnDataSource, Div, Select, Slider, TextInput, Toggle
 from bokeh.plotting import figure
+
+# curdoc(). add_root(get_loading_div())
+# curdoc().title = "Loading..."
 
 MDS = manifold.MDS(n_components=2, random_state=1)
 TARGET_LOGO_HEIGHT = 0.1
@@ -158,6 +161,6 @@ update_positions()  # initial load of the data
 update_markers()  # show plot
 # Thread(target=get_images).start()  # get the aspect ratios for the images
 
-
-curdoc().add_root(l)
+curdoc().clear()
 curdoc().title = "News Bias"
+curdoc().add_root(l)

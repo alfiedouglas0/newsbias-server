@@ -6,6 +6,7 @@ STYLE_PATH = join(dirname(__file__), "templates/style.html")
 HEADER_PATH = join(dirname(__file__), "templates/main.html")
 DESCRIPTION_PATH = join(dirname(__file__), "templates/description.html")
 INSTRUCTIONS_PATH = join(dirname(__file__), "templates/instructions.html")
+LOADING_PATH = join(dirname(__file__), "templates/loading.html")
 
 ARTICLES_COUNT_PLACEHOLDER = "$ARTICLES_COUNT$"
 EVENTS_COUNT_PLACEHOLDER = "$EVENTS_COUNT$"
@@ -53,3 +54,12 @@ def get_instructions_div(path: str = INSTRUCTIONS_PATH) -> Div:
                margin=(5, 2, 20, 2),
                css_classes=["scroll"],
                height=60, align=("center", "start"))
+
+
+def get_loading_div(path: str = LOADING_PATH) -> Div:
+    html_str = get_style() + open(path).read()
+    return Div(text=html_str,
+               sizing_mode="stretch_both",
+               margin=(20, 20, 20, 20),
+               css_classes=["scroll", "center"],
+               align=("center", "center"))

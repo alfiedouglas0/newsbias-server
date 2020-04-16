@@ -26,9 +26,10 @@ TARGET_LOGO_HEIGHT = 15
 TOOLTIPS = [
     ("Publisher", "@publisher"),
 ]
-TOOLS = ["pan", "wheel_zoom", "box_zoom", "save", "reset"]
+TOOLS = ["pan", "wheel_zoom", "box_zoom", "save"]
 SLIDER_STEP = 0.025
 DATA_PATH = join(dirname(__file__), "data/all_results.json")
+DEFAULT_WIDTH_HEIGHT = 450
 DATA = {}
 with open(DATA_PATH, "r") as f:
     DATA = json.load(f)
@@ -60,11 +61,10 @@ source = ColumnDataSource(
 
 p = figure(width_policy="fit", height_policy="fit", tools=TOOLS,
            title="", toolbar_location="right", tooltips=TOOLTIPS,
-           sizing_mode="stretch_both",
-           x_range=(-215, 215),
-           y_range=(-120, 120),
-           margin=10,
-           min_width=600, min_height=450)
+           sizing_mode="stretch_both", margin=10,
+           plot_width=DEFAULT_WIDTH_HEIGHT, plot_height=DEFAULT_WIDTH_HEIGHT,
+           min_width=600, min_height=450,
+           active_scroll="wheel_zoom")
 glyph_cirles = p.circle(x="x", y="y", source=source, size=7,
                         #  color="color",
                         line_color=None, visible=False)
@@ -142,6 +142,24 @@ def update_positions():
     )
 
 
+def resize_graph(atrr, old, new):
+    old = DEFAULT_WIDTH_HEIGHT if old == None else old
+    if atrr == 'outer_width':
+        newWidthRatio = new / old
+        plotRange = p.x_range.end - p.x_range.start
+        newPlotRange = plotRange * newWidthRatio
+        pointsToAdd = (newPlotRange - plotRange) / 2
+        p.x_range.update(start=p.x_range.start - pointsToAdd,
+                         end=p.x_range.end + pointsToAdd)
+    elif atrr == 'outer_height':
+        newHeightRatio = new / old
+        plotRange = p.y_range.end - p.y_range.start
+        newPlotRange = plotRange * newHeightRatio
+        pointsToAdd = (newPlotRange - plotRange) / 2
+        p.y_range.update(start=p.y_range.start - pointsToAdd,
+                         end=p.y_range.end + pointsToAdd)
+
+
 controls = [wieght_sow, wieght_sent, wieght_ie, wieght_ambig, show_logo]
 
 for control in controls:
@@ -149,6 +167,10 @@ for control in controls:
         control.on_change('value', lambda attr, old, new: update_positions())
     elif hasattr(control, "on_click"):
         control.on_change('active', lambda attr, old, new: update_markers())
+
+p.on_change('outer_width', resize_graph)
+p.on_change('outer_height', resize_graph)
+
 
 inputs = column(div_instructions, *controls,
                 width=320, margin=20, max_width=320)
@@ -160,7 +182,6 @@ l = layout([
 ], sizing_mode="stretch_both", height_policy="fit")
 
 set_defaults()
-
 get_images()  # get the aspect ratios for the images
 update_positions()  # initial load of the data
 update_markers()  # show plot

@@ -64,6 +64,7 @@ p = figure(width_policy="fit", height_policy="fit", tools=TOOLS,
            sizing_mode="stretch_both", margin=10,
            plot_width=DEFAULT_WIDTH_HEIGHT, plot_height=DEFAULT_WIDTH_HEIGHT,
            min_width=600, min_height=450,
+           x_range=(-125, 125), y_range=(-125, 125),
            active_scroll="wheel_zoom")
 glyph_cirles = p.circle(x="x", y="y", source=source, size=7,
                         #  color="color",

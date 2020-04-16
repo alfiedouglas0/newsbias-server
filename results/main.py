@@ -22,11 +22,12 @@ from bokeh.plotting import figure
 # curdoc().title = "Loading..."
 
 MDS = manifold.MDS(n_components=2, random_state=1)
-TARGET_LOGO_HEIGHT = 0.1
+TARGET_LOGO_HEIGHT = 15
 TOOLTIPS = [
     ("Publisher", "@publisher"),
 ]
 TOOLS = ["pan", "wheel_zoom", "box_zoom", "save", "reset"]
+SLIDER_STEP = 0.025
 DATA_PATH = join(dirname(__file__), "data/all_results.json")
 DATA = {}
 with open(DATA_PATH, "r") as f:
@@ -37,14 +38,15 @@ div_description = get_description_div()
 div_instructions = get_instructions_div()
 
 # Create Input controls
+
 wieght_sow = Slider(title="Influence of style of wrtiting",
-                    value=1, start=0, end=1, step=0.025)
+                    value=1, start=0, end=1, step=SLIDER_STEP)
 wieght_sent = Slider(title="Influence of emotive language",
-                     value=1, start=0, end=1, step=0.025)
+                     value=1, start=0, end=1, step=SLIDER_STEP)
 wieght_ie = Slider(title="Influence of facts presented",
-                   value=1, start=0, end=1, step=0.025)
+                   value=1, start=0, end=1, step=SLIDER_STEP)
 wieght_ambig = Slider(title="Influence of the ambiguity of the articles",
-                      value=1, start=0, end=1, step=0.025)
+                      value=1, start=0, end=1, step=SLIDER_STEP)
 # min_year = Slider(title="Articles from", start=2015,
 #                   end=2020, value=2015, step=1)
 # max_year = Slider(title="Articles till", start=2015,
@@ -58,14 +60,17 @@ source = ColumnDataSource(
 
 p = figure(width_policy="fit", height_policy="fit", tools=TOOLS,
            title="", toolbar_location="right", tooltips=TOOLTIPS,
-           sizing_mode="stretch_both", margin=10,
+           sizing_mode="stretch_both",
+           x_range=(-215, 215),
+           y_range=(-120, 120),
+           margin=10,
            min_width=600, min_height=450)
 glyph_cirles = p.circle(x="x", y="y", source=source, size=7,
                         #  color="color",
                         line_color=None, visible=False)
 glyph_images = p.image_url(url="url", x="x", y="y", anchor="center",
                            source=source, w="imageW", h=TARGET_LOGO_HEIGHT,
-                           visible=False)
+                           visible=True)
 
 
 def set_defaults():
@@ -76,9 +81,9 @@ def get_images():
     for index, url in enumerate(DATA["urls"]):
         try:
             size = Image.open(io.BytesIO(requests.get(url).content)).size
-            aspectRatio = size[0] / size[1]
             DATA["imageW"][index] = TARGET_LOGO_HEIGHT * (size[0] / size[1])
         except:
+            print("ERROR: downloading the image: '{}'".format(url))
             continue
 
 

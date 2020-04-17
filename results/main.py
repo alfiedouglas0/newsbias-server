@@ -27,7 +27,7 @@ TOOLTIPS = [
     ("Publisher", "@publisher"),
 ]
 TOOLS = ["pan", "wheel_zoom", "box_zoom", "save"]
-SLIDER_STEP = 0.025
+SLIDER_STEP = 0.05
 DATA_PATH = join(dirname(__file__), "data/all_results.json")
 DEFAULT_WIDTH_HEIGHT = 450
 DATA = {}
@@ -60,7 +60,7 @@ source = ColumnDataSource(
     data=dict(x=[], y=[], color=[], publisher=[], url=[], imageW=[], imageH=[]))
 
 p = figure(width_policy="fit", height_policy="fit", tools=TOOLS,
-           title="", toolbar_location="right", tooltips=TOOLTIPS,
+           title="Publisher Similarity (closer publishers are more similar)", toolbar_location="right", tooltips=TOOLTIPS,
            sizing_mode="stretch_both", margin=10,
            plot_width=DEFAULT_WIDTH_HEIGHT, plot_height=DEFAULT_WIDTH_HEIGHT,
            min_width=600, min_height=450,

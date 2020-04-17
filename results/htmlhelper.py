@@ -11,8 +11,8 @@ LOADING_PATH = join(dirname(__file__), "templates/loading.html")
 ARTICLES_COUNT_PLACEHOLDER = "$ARTICLES_COUNT$"
 EVENTS_COUNT_PLACEHOLDER = "$EVENTS_COUNT$"
 PUBLISHERS_STR_PLACEHOLDER = "$PUBLISHERS_STR$"
-DEFAULT_ARTICLES_COUNT = "125k"
-DEFAULT_EVENTS_COUNT = "300"
+DEFAULT_ARTICLES_COUNT = "125,000"
+DEFAULT_EVENTS_COUNT = "6,000"
 DEFAULT_PUBLISHERS = ["Sky News", "Metro", "BBC News", "The Daily Mail", "The Independent",
                       "The Mirror", "The Guardian", "The Sun"]
 DEFAULT_PUBLISHERS_STR = ", ".join(DEFAULT_PUBLISHERS[0:len(
@@ -44,7 +44,7 @@ def get_description_div(path: str = DESCRIPTION_PATH) -> Div:
                margin=(5, 20, 5, 20),
                height_policy="fixed",
                css_classes=["scroll", "margin"],
-               height=100, align=("center", "start"))
+               height=170, align=("center", "start"))
 
 
 def get_instructions_div(path: str = INSTRUCTIONS_PATH) -> Div:

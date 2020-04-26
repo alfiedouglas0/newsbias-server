@@ -1,4 +1,5 @@
 from htmlhelper import get_header_div, get_description_div, get_instructions_div, get_loading_div
+from utils import scale_2d_plot
 
 from os.path import dirname, join
 import json
@@ -30,6 +31,7 @@ TOOLS = ["pan", "wheel_zoom", "box_zoom", "save"]
 SLIDER_STEP = 0.05
 DATA_PATH = join(dirname(__file__), "data/all_results.json")
 DEFAULT_WIDTH_HEIGHT = 450
+TARGET_GRAPH_RANGE = [200, 200]
 DATA = {}
 with open(DATA_PATH, "r") as f:
     DATA = json.load(f)
@@ -64,8 +66,13 @@ p = figure(width_policy="fit", height_policy="fit", tools=TOOLS,
            sizing_mode="stretch_both", margin=10,
            plot_width=DEFAULT_WIDTH_HEIGHT, plot_height=DEFAULT_WIDTH_HEIGHT,
            min_width=600, min_height=450,
-           x_range=(-125, 125), y_range=(-125, 125),
+           x_range=(TARGET_GRAPH_RANGE[0] * -0.625,
+                    TARGET_GRAPH_RANGE[0] * 0.625),
+           y_range=(TARGET_GRAPH_RANGE[1] * -0.625,
+                    TARGET_GRAPH_RANGE[1] * 0.625),
            active_scroll="wheel_zoom")
+p.yaxis.visible = False
+p.xaxis.visible = False
 glyph_cirles = p.circle(x="x", y="y", source=source, size=7,
                         #  color="color",
                         line_color=None, visible=False)
@@ -108,7 +115,7 @@ def get_mds_data():
     if "AMBIGUITY" in DATA:
         data.append(
             [[d[0] * wieght_ambig.value, d[1] * wieght_ambig.value]
-             for d in DATA["AMBIGUITY"]]
+             for d in scale_2d_plot(DATA["AMBIGUITY"], [100, 100], [50, 50])]
         )
 
     if len(data) <= 0:
@@ -133,6 +140,7 @@ def update_positions():
     dataMDS = get_mds_data()
     if len(dataMDS) <= 0:
         return
+    dataMDS = np.around(scale_2d_plot(dataMDS, TARGET_GRAPH_RANGE), 0)
 
     source.data = dict(
         x=[d[0] for d in dataMDS],

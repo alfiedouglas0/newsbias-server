@@ -115,7 +115,7 @@ def get_mds_data():
     if "AMBIGUITY" in DATA:
         data.append(
             [[d[0] * wieght_ambig.value, d[1] * wieght_ambig.value]
-             for d in scale_2d_plot(DATA["AMBIGUITY"], [100, 100], [50, 50])]
+             for d in DATA["AMBIGUITY"]]
         )
 
     if len(data) <= 0:

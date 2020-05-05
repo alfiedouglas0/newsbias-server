@@ -27,29 +27,30 @@ TARGET_LOGO_HEIGHT = 15
 TOOLTIPS = [
     ("Publisher", "@publisher"),
 ]
-TOOLS = ["pan", "wheel_zoom", "box_zoom", "save"]
-SLIDER_STEP = 0.05
+TOOLS = []  # ["pan", "wheel_zoom", "box_zoom", "save"]
+SLIDER_STEP = 0.1
 DATA_PATH = join(dirname(__file__), "data/all_results.json")
 DEFAULT_WIDTH_HEIGHT = 450
 TARGET_GRAPH_RANGE = [200, 200]
-DATA = {}
+RAW_DATA = {}
+NUMERICAL_DATA = {"SENTIMENT": None, "UNMASKING": None, "FACTS": None,
+                  "AMBIGUITY": None}
 with open(DATA_PATH, "r") as f:
-    DATA = json.load(f)
+    RAW_DATA = json.load(f)
 
 div_header = get_header_div()
 div_description = get_description_div()
 div_instructions = get_instructions_div()
 
 # Create Input controls
-
 wieght_sow = Slider(title="Influence of style of wrtiting",
                     value=1, start=0, end=1, step=SLIDER_STEP)
 wieght_sent = Slider(title="Influence of emotive language",
-                     value=1, start=0, end=1, step=SLIDER_STEP)
+                     value=0, start=0, end=1, step=SLIDER_STEP)
 wieght_ie = Slider(title="Influence of facts presented",
-                   value=1, start=0, end=1, step=SLIDER_STEP)
+                   value=0, start=0, end=1, step=SLIDER_STEP)
 wieght_ambig = Slider(title="Influence of the ambiguity of the articles",
-                      value=1, start=0, end=1, step=SLIDER_STEP)
+                      value=0, start=0, end=1, step=SLIDER_STEP)
 # min_year = Slider(title="Articles from", start=2015,
 #                   end=2020, value=2015, step=1)
 # max_year = Slider(title="Articles till", start=2015,
@@ -61,20 +62,18 @@ show_logo = Toggle(label="Hide publisher logo",
 source = ColumnDataSource(
     data=dict(x=[], y=[], color=[], publisher=[], url=[], imageW=[], imageH=[]))
 
-p = figure(width_policy="fit", height_policy="fit", tools=TOOLS,
-           title="Publisher Similarity (closer publishers are more similar)", toolbar_location="right", tooltips=TOOLTIPS,
+p = figure(width_policy="fit", height_policy="fit", tooltips=TOOLTIPS,
+           title="", toolbar_location=None,  tools=TOOLS,
            sizing_mode="stretch_both", margin=10,
            plot_width=DEFAULT_WIDTH_HEIGHT, plot_height=DEFAULT_WIDTH_HEIGHT,
            min_width=600, min_height=450,
            x_range=(TARGET_GRAPH_RANGE[0] * -0.625,
                     TARGET_GRAPH_RANGE[0] * 0.625),
            y_range=(TARGET_GRAPH_RANGE[1] * -0.625,
-                    TARGET_GRAPH_RANGE[1] * 0.625),
-           active_scroll="wheel_zoom")
+                    TARGET_GRAPH_RANGE[1] * 0.625))
 p.yaxis.visible = False
 p.xaxis.visible = False
 glyph_cirles = p.circle(x="x", y="y", source=source, size=7,
-                        #  color="color",
                         line_color=None, visible=False)
 glyph_images = p.image_url(url="url", x="x", y="y", anchor="center",
                            source=source, w="imageW", h=TARGET_LOGO_HEIGHT,
@@ -82,14 +81,17 @@ glyph_images = p.image_url(url="url", x="x", y="y", anchor="center",
 
 
 def set_defaults():
-    DATA["imageW"] = [0.12] * len(DATA["urls"])
+    RAW_DATA["imageW"] = [0.12] * len(RAW_DATA["urls"])
+    for key in filter(lambda item: item in NUMERICAL_DATA, RAW_DATA):
+        NUMERICAL_DATA[key] = np.array(RAW_DATA[key])
 
 
 def get_images():
-    for index, url in enumerate(DATA["urls"]):
+    for index, url in enumerate(RAW_DATA["urls"]):
         try:
             size = Image.open(io.BytesIO(requests.get(url).content)).size
-            DATA["imageW"][index] = TARGET_LOGO_HEIGHT * (size[0] / size[1])
+            RAW_DATA["imageW"][index] = TARGET_LOGO_HEIGHT * \
+                (size[0] / size[1])
         except:
             print("ERROR: downloading the image: '{}'".format(url))
             continue
@@ -97,34 +99,24 @@ def get_images():
 
 def get_mds_data():
     data = []
-    if "SENTIMENT" in DATA:
-        data.append(
-            [[d[0] * wieght_sent.value, d[1] * wieght_sent.value]
-             for d in DATA["SENTIMENT"]]
-        )
-    if "UNMASKING" in DATA:
-        data.append(
-            [[d[0] * wieght_sow.value, d[1] * wieght_sow.value]
-             for d in DATA["UNMASKING"]]
-        )
-    if "FACTS" in DATA:
-        data.append(
-            [[d[0] * wieght_ie.value, d[1] * wieght_ie.value]
-             for d in DATA["FACTS"]]
-        )
-    if "AMBIGUITY" in DATA:
-        data.append(
-            [[d[0] * wieght_ambig.value, d[1] * wieght_ambig.value]
-             for d in DATA["AMBIGUITY"]]
-        )
+    weightSum = wieght_sent.value + wieght_ie.value + \
+        wieght_sow.value + wieght_ambig.value
+    if not NUMERICAL_DATA["SENTIMENT"] is None and wieght_sent.value != 0:
+        data.append(NUMERICAL_DATA["SENTIMENT"] *
+                    (wieght_sent.value / weightSum))
+    if not NUMERICAL_DATA["FACTS"] is None and wieght_ie.value != 0:
+        data.append(NUMERICAL_DATA["FACTS"] *
+                    (wieght_ie.value / weightSum))
+    if not NUMERICAL_DATA["UNMASKING"] is None and wieght_sow.value != 0:
+        data.append(NUMERICAL_DATA["UNMASKING"] *
+                    (wieght_sow.value / weightSum))
+    if not NUMERICAL_DATA["AMBIGUITY"] is None and wieght_ambig.value != 0:
+        data.append(NUMERICAL_DATA["AMBIGUITY"] *
+                    (wieght_ambig.value / weightSum))
 
     if len(data) <= 0:
-        return []
-
-    return MDS.fit_transform(
-        [functools.reduce(operator.add, [*d])
-         for d in zip(*data)]  # concat the arrays
-    )
+        return data
+    return MDS.fit_transform(np.concatenate(data, axis=1))
 
 
 def update_markers():
@@ -139,15 +131,16 @@ def update_markers():
 def update_positions():
     dataMDS = get_mds_data()
     if len(dataMDS) <= 0:
-        return
-    dataMDS = np.around(scale_2d_plot(dataMDS, TARGET_GRAPH_RANGE), 0)
+        dataMDS = np.zeros([len(RAW_DATA["publisherNames"]), 2])
+    else:
+        dataMDS = np.around(scale_2d_plot(dataMDS, TARGET_GRAPH_RANGE), 0)
 
     source.data = dict(
-        x=[d[0] for d in dataMDS],
-        y=[d[1] for d in dataMDS],
-        publisher=DATA["publisherNames"],
-        url=DATA["urls"],
-        imageW=DATA["imageW"],
+        x=dataMDS[:, 0],
+        y=dataMDS[:, 1],
+        publisher=RAW_DATA["publisherNames"],
+        url=RAW_DATA["urls"],
+        imageW=RAW_DATA["imageW"],
     )
 
 

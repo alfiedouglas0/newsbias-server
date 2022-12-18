@@ -3,13 +3,9 @@ from utils import scale_2d_plot
 
 from os.path import dirname, join
 import json
-from datetime import datetime
 import io
 from PIL import Image
 import requests
-import functools
-import operator
-# from threading import Thread
 
 import numpy as np
 from sklearn import manifold
@@ -17,7 +13,7 @@ from sklearn import manifold
 from bokeh.io import curdoc
 from bokeh.layouts import column, layout
 from bokeh.models import ColumnDataSource, Div, Select, Slider, TextInput, Toggle
-from bokeh.plotting import figure
+from bokeh.plotting import figure, output_file
 
 # curdoc(). add_root(get_loading_div())
 # curdoc().title = "Loading..."
@@ -65,7 +61,7 @@ source = ColumnDataSource(
 p = figure(width_policy="fit", height_policy="fit", tooltips=TOOLTIPS,
            title="", toolbar_location=None,  tools=TOOLS,
            sizing_mode="stretch_both", margin=10,
-           plot_width=DEFAULT_WIDTH_HEIGHT, plot_height=DEFAULT_WIDTH_HEIGHT,
+           width=DEFAULT_WIDTH_HEIGHT, height=DEFAULT_WIDTH_HEIGHT,
            min_width=600, min_height=450,
            x_range=(TARGET_GRAPH_RANGE[0] * -0.625,
                     TARGET_GRAPH_RANGE[0] * 0.625),
@@ -88,13 +84,16 @@ def set_defaults():
 
 def get_images():
     for index, url in enumerate(RAW_DATA["urls"]):
+        size = RAW_DATA["urlSizes"][index]
         try:
             size = Image.open(io.BytesIO(requests.get(url).content)).size
-            RAW_DATA["imageW"][index] = TARGET_LOGO_HEIGHT * \
-                (size[0] / size[1])
-        except:
+        except Exception as e:
             print("ERROR: downloading the image: '{}'".format(url))
-            continue
+            print(e)
+            print("Using previously known size: {}, {}".format(
+                size[0], size[1]))
+        RAW_DATA["imageW"][index] = TARGET_LOGO_HEIGHT * \
+            (size[0] / size[1])
 
 
 def get_mds_data():
@@ -134,7 +133,8 @@ def update_positions():
         dataMDS = np.zeros([len(RAW_DATA["publisherNames"]), 2])
     else:
         dataMDS = np.around(scale_2d_plot(dataMDS, TARGET_GRAPH_RANGE), 0)
-
+    with open("temp.json", 'w') as f:
+        f.write(json.dumps(dataMDS.tolist()))
     source.data = dict(
         x=dataMDS[:, 0],
         y=dataMDS[:, 1],
@@ -145,7 +145,7 @@ def update_positions():
 
 
 def resize_graph(atrr, old, new):
-    old = DEFAULT_WIDTH_HEIGHT if old == None else old
+    old = DEFAULT_WIDTH_HEIGHT if old == None or old == 0 else old
     if atrr == 'outer_width':
         newWidthRatio = new / old
         plotRange = p.x_range.end - p.x_range.start

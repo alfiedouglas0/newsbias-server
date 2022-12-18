@@ -3,6 +3,6 @@ pandas
 numpy
 bokeh
 gunicorn
-sklearn
+scikit-learn
 Pillow
 requests

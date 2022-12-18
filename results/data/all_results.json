@@ -25,9 +25,19 @@
     "https://upload.wikimedia.org/wikipedia/en/thumb/f/ff/BBC_News.svg/1200px-BBC_News.svg.png",
     "https://upload.wikimedia.org/wikipedia/de/thumb/4/44/Logo_Daily_Mail_1.svg/1024px-Logo_Daily_Mail_1.svg.png",
     "https://upload.wikimedia.org/wikipedia/fi/thumb/a/ab/The_Independent_logo.svg/350px-The_Independent_logo.svg.png",
-    "https://upload.wikimedia.org/wikipedia/commons/2/2e/Logo_Daily_Mirror.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/f/fd/Daily_Mirror_logo.png",
     "https://upload.wikimedia.org/wikipedia/commons/thumb/7/75/The_Guardian_2018.svg/1200px-The_Guardian_2018.svg.png",
     "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/The_Sun.svg/190px-The_Sun.svg.png"
+  ],
+  "urlSizes":[
+    [1000, 206],
+    [1024, 296],
+    [1200, 901],
+    [1024, 168],
+    [250, 94],
+    [398, 126],
+    [1200, 395],
+    [190, 82]
   ],
   "AMBIGUITY": [
     [
